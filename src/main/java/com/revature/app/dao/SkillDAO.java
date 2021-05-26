@@ -2,24 +2,32 @@ package com.revature.app.dao;
 
 import java.util.List;
 
+import org.springframework.stereotype.Repository;
+
 import com.revature.app.dto.SkillDTO;
+import com.revature.app.exception.SkillDAOException;
 import com.revature.app.model.Skill;
 
+@Repository
 public class SkillDAO {
 
 	public List<Skill> getAllSkills() {
 		return null;
 	}
 	
-	public void addSkill(SkillDTO newSkill) {
-		
+	public Skill getSkillByID(int skillID) throws SkillDAOException {
+		return null;
 	}
 	
-	public void updateSkill(Skill upSkill) {
-		
+	public Skill addSkill(SkillDTO newSkill) throws SkillDAOException {
+		return null;
 	}
 	
-	public void deleteSkill(int skillID) {
-		
+	public Skill updateSkill(int skillID, SkillDTO upSkill) throws SkillDAOException {
+		return null;
+	}
+	
+	public Skill deleteSkill(int skillID) throws SkillDAOException {
+		return null;
 	}
 }
