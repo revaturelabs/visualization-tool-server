@@ -80,6 +80,8 @@ public class SkillController {
 			return ResponseEntity.status(400).body(new MessageDTO(e.getMessage()));
 		} catch (BadParameterException e) {
 			return ResponseEntity.status(400).body(new MessageDTO(e.getMessage()));
+		} catch (SkillNotFoundException e) {
+			return ResponseEntity.status(404).body(new MessageDTO(e.getMessage()));
 		}
 	}
 	
@@ -95,6 +97,8 @@ public class SkillController {
 			return ResponseEntity.status(400).body(new MessageDTO(e.getMessage()));
 		} catch (SkillNotDeletedException e) {
 			return ResponseEntity.status(400).body(new MessageDTO(e.getMessage()));
+		} catch (SkillNotFoundException e) {
+			return ResponseEntity.status(404).body(new MessageDTO(e.getMessage()));
 		}
 	
 	}

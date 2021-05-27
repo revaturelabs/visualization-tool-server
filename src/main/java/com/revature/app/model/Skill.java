@@ -9,6 +9,8 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
+import com.revature.app.dto.SkillDTO;
+
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -32,4 +34,14 @@ public class Skill {
 	@ManyToOne
 	@JoinColumn(name = "category_id")
 	private Category category;
+	
+	public Skill(SkillDTO skillDTO) {
+		this.skillName = skillDTO.getName();
+		this.category = skillDTO.getCategory();
+	}
+	
+	public void updateFromDTO(SkillDTO skillDTO) {
+		this.skillName = skillDTO.getName();
+		this.category = skillDTO.getCategory();
+	}
 }

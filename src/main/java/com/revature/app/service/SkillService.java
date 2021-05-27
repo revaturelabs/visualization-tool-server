@@ -3,6 +3,7 @@ package com.revature.app.service;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import com.revature.app.dao.SkillDAO;
@@ -23,7 +24,7 @@ public class SkillService {
 	private SkillDAO skillDAO;
 
 	public List<Skill> getAllSkills(){
-		return skillDAO.getAllSkills();
+		return skillDAO.findAll();
 	}
 	
 	public Skill getSkillByID(String skillID) throws BadParameterException, EmptyParameterException, SkillNotFoundException {
@@ -33,29 +34,32 @@ public class SkillService {
 				throw new EmptyParameterException("The skill ID was left blank");
 			}
 			int id = Integer.parseInt(skillID);
-			skill = skillDAO.getSkillByID(id);
-			return skill;
+			skill = skillDAO.findById(id);
+			if(skill == null) {
+				throw new SkillNotFoundException("The skill with ID " + skillID + " could not be found.");
+			} else {
+				return skill;
+			}
 		} catch (NumberFormatException e) {
 			throw new BadParameterException("The skill ID provided must be of type int");
-		} catch (SkillDAOException e) {
-			throw new SkillNotFoundException("The skill with ID " + skillID + " could not be found.");
 		}
 	}
 	
 	public Skill addSkill(SkillDTO skillDTO) throws EmptyParameterException, SkillNotAddedException {
 		Skill skill = null;
-		try {
-			if(skillDTO.getName().trim().equals("")) {
-				throw new EmptyParameterException("The skill name was left blank");
-			}
-			skill = skillDAO.addSkill(skillDTO);
-			return skill;
-		} catch (SkillDAOException e) {
+		if(skillDTO.getName().trim().equals("")) {
+			throw new EmptyParameterException("The skill name was left blank");
+		}
+		//skill = skillDAO.addSkill(skillDTO);
+		skill = new Skill(skillDTO);
+		skill = skillDAO.save(skill);
+		if(skill == null || skill.getSkillId() == 0) {
 			throw new SkillNotAddedException("The skill could not be added due to a database issue");
 		}
+		return skill;
 	}
-	
-	public Skill updateSkill(String skillID, SkillDTO upSkill) throws EmptyParameterException, SkillNotUpdatedException, BadParameterException{
+
+	public Skill updateSkill(String skillID, SkillDTO upSkill) throws EmptyParameterException, SkillNotUpdatedException, BadParameterException, SkillNotFoundException{
 		Skill skill = null;
 		try {
 			if(skillID.trim().equals("")){
@@ -65,28 +69,39 @@ public class SkillService {
 				throw new EmptyParameterException("The skill name was left blank");
 			}
 			int id = Integer.parseInt(skillID);
-			skill = skillDAO.updateSkill(id, upSkill);
+			skill = skillDAO.findById(id);
+			if(skill == null) {
+				throw new SkillNotFoundException("The skill could not be updated because it couldn't be found");
+			} else {
+				skill.updateFromDTO(upSkill);
+				skill = skillDAO.save(skill);
+				if(skill == null) {
+					throw new SkillNotUpdatedException("The skill could not be updated due to a database issue");
+				}
+			}
 			return skill;
 		} catch (NumberFormatException e) {
 			throw new BadParameterException("The skill ID provided must be of type int");
-		} catch (SkillDAOException e) {
-			throw new SkillNotUpdatedException("The skill could not be updated due to a database issue");
 		}
 	}
-	
-	public Skill deleteSkill(String skillID) throws EmptyParameterException, BadParameterException, SkillNotDeletedException {
+
+	public Skill deleteSkill(String skillID) throws EmptyParameterException, BadParameterException, SkillNotDeletedException, SkillNotFoundException {
 		Skill skill = null;
 		try {
 			if(skillID.trim().equals("")){
 				throw new EmptyParameterException("The skill ID was left blank");
 			}
 			int id = Integer.parseInt(skillID);
-			skill = skillDAO.deleteSkill(id);
+			skill = skillDAO.findById(id);
+			if(skill == null) {
+				throw new SkillNotFoundException("The skill could not be deleted because it couldn't be found");
+			} else {
+				skillDAO.delete(skill);
+			}
 			return skill;
 		} catch (NumberFormatException e) {
 			throw new BadParameterException("The skill ID provided must be of type int");
-		} catch (SkillDAOException e) {
-			throw new SkillNotDeletedException("The skill could not be deleted due to a database issue");
 		}
 	}
+	
 }

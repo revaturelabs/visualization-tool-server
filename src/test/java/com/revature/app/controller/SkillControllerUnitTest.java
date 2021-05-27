@@ -86,11 +86,12 @@ class SkillControllerUnitTest {
 		lenient().when(mockSkillService.updateSkill(eq(" "), eq(skillDTO1))).thenThrow(new EmptyParameterException());
 		lenient().when(mockSkillService.updateSkill(eq("test"), eq(skillDTO1))).thenThrow(new BadParameterException());
 		lenient().when(mockSkillService.updateSkill(eq("1"), eq(skillDTO2))).thenThrow(new EmptyParameterException());
-		lenient().when(mockSkillService.updateSkill(eq("1"), eq(skillDTO3))).thenThrow(new SkillNotUpdatedException());
+		lenient().when(mockSkillService.updateSkill(eq("1"), eq(skillDTO3))).thenThrow(new SkillNotFoundException());
 		lenient().when(mockSkillService.updateSkill(eq("1"), eq(skillDTO4))).thenThrow(new SkillNotUpdatedException());
 		
 		lenient().when(mockSkillService.deleteSkill(eq("1"))).thenReturn(skill1);
 		lenient().when(mockSkillService.deleteSkill(eq("2"))).thenThrow(new SkillNotDeletedException());
+		lenient().when(mockSkillService.deleteSkill(eq("3"))).thenThrow(new SkillNotFoundException());
 		lenient().when(mockSkillService.deleteSkill(eq(" "))).thenThrow(new EmptyParameterException());
 		lenient().when(mockSkillService.deleteSkill(eq("test"))).thenThrow(new BadParameterException());
 	}
@@ -227,7 +228,7 @@ class SkillControllerUnitTest {
 				put("/skill/1")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(body)
-				).andExpect(MockMvcResultMatchers.status().is(400));
+				).andExpect(MockMvcResultMatchers.status().is(404));
 	}
 	
 	@Test
@@ -261,6 +262,11 @@ class SkillControllerUnitTest {
 	@Test
 	void test_deleteSkill_badID() throws Exception {
 		mockMvc.perform(delete("/skill/2")).andExpect(MockMvcResultMatchers.status().is(400));
+	}
+	
+	@Test
+	void test_deleteSkill_skillDoesNotExist() throws Exception {
+		mockMvc.perform(delete("/skill/3")).andExpect(MockMvcResultMatchers.status().is(404));
 	}
 	
 	@Test
