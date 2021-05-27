@@ -52,21 +52,19 @@ class SkillServiceUnitTest {
 		SkillDTO skillDTO1 = new SkillDTO("TestSkill", new Category(1, "TestCat", null));
 		SkillDTO skillDTO2 = new SkillDTO("Duplicate", new Category(1, "TestCat", null));
 		SkillDTO skillDTO3 = new SkillDTO("Test", new Category(0, "BadCat", null));
+		SkillDTO skillDTO4 = new SkillDTO("TestSkill", new Category(1, "TestCat", null));
 		
-		lenient().when(mockSkillDAO.getSkillByID(eq(1))).thenReturn(skill1);
-		lenient().when(mockSkillDAO.getSkillByID(eq(0))).thenThrow(new SkillDAOException());
+		lenient().when(mockSkillDAO.findById(eq(1))).thenReturn(skill1);
+		lenient().when(mockSkillDAO.findById(eq(0))).thenReturn(null);
 		
-		lenient().when(mockSkillDAO.addSkill(skillDTO1)).thenReturn(skill3);
-		lenient().when(mockSkillDAO.addSkill(skillDTO2)).thenThrow(new SkillDAOException());
-		lenient().when(mockSkillDAO.addSkill(skillDTO3)).thenThrow(new SkillDAOException());
+		lenient().when(mockSkillDAO.save(new Skill(skillDTO1))).thenReturn(skill3);
+		lenient().when(mockSkillDAO.save(new Skill(skillDTO2))).thenReturn(null);
+		lenient().when(mockSkillDAO.save(new Skill(skillDTO3))).thenReturn(null);
 		
-		lenient().when(mockSkillDAO.updateSkill(1, skillDTO1)).thenReturn(skill3);
-		lenient().when(mockSkillDAO.updateSkill(2, skillDTO1)).thenThrow(new SkillDAOException());
-		lenient().when(mockSkillDAO.updateSkill(2, skillDTO3)).thenThrow(new SkillDAOException());
-		
-		lenient().when(mockSkillDAO.deleteSkill(0)).thenThrow(new SkillDAOException());
-		lenient().when(mockSkillDAO.deleteSkill(1)).thenReturn(skill1);
-		
+		lenient().when(mockSkillDAO.save(new Skill(skillDTO4))).thenReturn(skill3);
+		lenient().when(mockSkillDAO.findById(eq(2))).thenReturn(skill3);
+		lenient().when(mockSkillDAO.findById(eq(3))).thenReturn(skill3);
+		lenient().when(mockSkillDAO.save(skill3)).thenReturn(skill3);
 	}
 	
 	
@@ -77,7 +75,7 @@ class SkillServiceUnitTest {
 		List<Skill> expected = new ArrayList<Skill>();
 		expected.add(skill1);
 		expected.add(skill2);
-		when(mockSkillDAO.getAllSkills()).thenReturn(expected);
+		when(mockSkillDAO.findAll()).thenReturn(expected);
 		List<Skill> actual = skillService.getAllSkills();
 		assertEquals(expected, actual);
 	}
@@ -85,7 +83,7 @@ class SkillServiceUnitTest {
 	@Test
 	void test_getAllSkills_noSkills() {
 		List<Skill> expected = new ArrayList<Skill>();
-		when(mockSkillDAO.getAllSkills()).thenReturn(expected);
+		when(mockSkillDAO.findAll()).thenReturn(expected);
 		List<Skill> actual = skillService.getAllSkills();
 		assertEquals(expected, actual);
 	}
@@ -184,15 +182,35 @@ class SkillServiceUnitTest {
 	
 //	
 	@Test
-	void test_updateSkill_happy() throws EmptyParameterException, SkillNotUpdatedException, BadParameterException {
+	void test_updateSkill_happy() throws EmptyParameterException, SkillNotUpdatedException, BadParameterException, SkillNotFoundException {
 		SkillDTO upSkill = new SkillDTO("TestSkill", new Category(1, "TestCat", null));
 		Skill expected = new Skill(1, "TestSkill", new Category(1, "TestCat", null));
-		Skill actual = skillService.updateSkill("1", upSkill);
+		Skill actual = skillService.updateSkill("3", upSkill);
 		assertEquals(expected, actual);
 	}
 	
 	@Test
-	void test_updateSkill_emptyID() throws SkillNotUpdatedException {
+	void test_updateSkill_skillNotUpdated() throws EmptyParameterException, SkillNotUpdatedException, BadParameterException, SkillNotFoundException {		
+		try {
+			SkillDTO upSkill = new SkillDTO("TestSkill", new Category(1, "TestCat", null));
+			skillService.updateSkill("2", upSkill);
+		} catch (SkillNotUpdatedException e) {
+			assertEquals(e.getMessage(), "The skill could not be updated due to a database issue");
+		}
+	}
+	
+	@Test
+	void test_updateSkill_noSkillToUpdate() throws EmptyParameterException, SkillNotUpdatedException, BadParameterException, SkillNotFoundException {
+		try {
+			SkillDTO upSkill = new SkillDTO("TestSkill", new Category(1, "TestCat", null));
+			skillService.updateSkill("5", upSkill);
+		} catch (SkillNotFoundException e) {
+			assertEquals(e.getMessage(), "The skill could not be updated because it couldn't be found");
+		}
+	}
+	
+	@Test
+	void test_updateSkill_emptyID() throws SkillNotUpdatedException, SkillNotFoundException {
 		try {
 			SkillDTO upSkill = new SkillDTO("", new Category(1, "", null));
 			skillService.updateSkill("   ", upSkill);
@@ -205,7 +223,7 @@ class SkillServiceUnitTest {
 	}
 	
 	@Test
-	void test_updateSkill_badID() throws SkillNotUpdatedException, EmptyParameterException {
+	void test_updateSkill_badParameter() throws SkillNotUpdatedException, EmptyParameterException, SkillNotFoundException {
 		try {
 			SkillDTO upSkill = new SkillDTO("Test", new Category(1, "", null));
 			skillService.updateSkill("test", upSkill);
@@ -216,7 +234,7 @@ class SkillServiceUnitTest {
 	}
 	
 	@Test
-	void test_updateSkill_emptyName() throws SkillNotUpdatedException, BadParameterException {
+	void test_updateSkill_emptyName() throws SkillNotUpdatedException, BadParameterException, SkillNotFoundException {
 		try {
 			SkillDTO upSkill = new SkillDTO("", new Category(1, "", null));
 			skillService.updateSkill("1", upSkill);
@@ -225,50 +243,27 @@ class SkillServiceUnitTest {
 			assertEquals(e.getMessage(), "The skill name was left blank");
 		}
 	}
-	
-
-	@Test
-	void test_updateSkill_badCategory() throws EmptyParameterException, BadParameterException {
-		try {
-			SkillDTO upSkill = new SkillDTO("Test", new Category(0, "BadCat", null));
-			skillService.updateSkill("2", upSkill);
-			fail("SkillNotUpdatedException was not thrown");
-		} catch (SkillNotUpdatedException e) {
-			assertEquals(e.getMessage(), "The skill could not be updated due to a database issue");
-		}
-	}
-	
-	@Test
-	void test_updateSkill_duplicateSkill() throws EmptyParameterException, BadParameterException {
-		try {
-			SkillDTO upSkill = new SkillDTO("TestSkill", new Category(1, "TestCat", null));
-			skillService.updateSkill("2", upSkill);
-			fail("SkillNotUpdatedException was not thrown");
-		} catch (SkillNotUpdatedException e) {
-			assertEquals(e.getMessage(), "The skill could not be updated due to a database issue");
-		}
-	}
 
 //	
 	@Test
-	void test_deleteSkill_happy() throws EmptyParameterException, BadParameterException, SkillNotDeletedException {
+	void test_deleteSkill_happy() throws EmptyParameterException, BadParameterException, SkillNotDeletedException, SkillNotFoundException {
 		Skill expected = new Skill(1, "", new Category(1, "", null));
 		Skill actual = skillService.deleteSkill("1");
 		assertEquals(expected, actual);
 	}
 	
 	@Test
-	void test_deleteSkill_IDDoesntExist() throws EmptyParameterException, BadParameterException {
+	void test_deleteSkill_IDDoesntExist() throws EmptyParameterException, BadParameterException, SkillNotDeletedException {
 		try {
 			skillService.deleteSkill("0");
-			fail("SkillNotDeletedException was not thrown");
-		} catch (SkillNotDeletedException e) {
-			assertEquals(e.getMessage(), "The skill could not be deleted due to a database issue");
+			fail("SkillNotFoundException was not thrown");
+		} catch (SkillNotFoundException e) {
+			assertEquals(e.getMessage(), "The skill could not be deleted because it couldn't be found");
 		}
 	}
 	
 	@Test
-	void test_deleteSkill_BadParameter() throws EmptyParameterException, SkillNotDeletedException {
+	void test_deleteSkill_BadParameter() throws EmptyParameterException, SkillNotDeletedException, SkillNotFoundException {
 		try {
 			skillService.deleteSkill("test");
 			fail("BadParameterException was not thrown");
@@ -278,7 +273,7 @@ class SkillServiceUnitTest {
 	}
 	
 	@Test
-	void test_deleteSkill_emptyParameter() throws BadParameterException, SkillNotDeletedException {
+	void test_deleteSkill_emptyParameter() throws BadParameterException, SkillNotDeletedException, SkillNotFoundException {
 		try {
 			skillService.deleteSkill("      ");
 			fail("EmptyParameterException was not thrown");
