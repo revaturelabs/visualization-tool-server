@@ -50,23 +50,13 @@ import com.revature.app.service.SkillService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 
-@AutoConfigureMockMvc
-@ExtendWith(SpringExtension.class)
 @ExtendWith(MockitoExtension.class)
-@ActiveProfiles("test")
-@SpringBootTest(classes = CurriculaVisualizationToolApplication.class)
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class SkillControllerUnitTest {
 	
-	@Autowired
+
 	private MockMvc mockMvc;
 	
 	private ObjectMapper om;
-	
-	@Autowired
-	EntityManagerFactory emf;
-	
-	private EntityManager em;
 	
 	@Mock
 	private SkillService mockSkillService;
@@ -77,7 +67,6 @@ class SkillControllerUnitTest {
 	
 	@BeforeEach
 	void setup() throws BadParameterException, EmptyParameterException, SkillNotFoundException, SkillNotAddedException, SkillNotUpdatedException, SkillNotDeletedException {
-		em = emf.createEntityManager();
 		om = new ObjectMapper();
 		mockMvc = MockMvcBuilders.standaloneSetup(skillController).build();
 		Skill skill1 = new Skill(1, "Skill1", new Category(1, "Cat1", null));
@@ -113,7 +102,6 @@ class SkillControllerUnitTest {
 	
 	
 	@Test
-	@Order(1)
 	void test_getAllSkills_happy() throws Exception {
 		Skill skill1 = new Skill(1, "", new Category(1, "", null));
 		Skill skill2 = new Skill(2, "", new Category(1, "", null));
@@ -125,19 +113,7 @@ class SkillControllerUnitTest {
 	}
 	
 	@Test
-	@Order(0)
-	@Commit
 	void test_getAllSkills_noSkills() throws Exception {
-		//order doesn't matter, we just run this first so we can persist and create
-		//the categories table in the mock database without needing it to be in a static
-		//context, these tests pass without creating the table within springtoolsuite
-		//however the automatic build process on github needs this in order to run
-		Category testCat = new Category(0, "Test", "TestDescription");
-		em.getTransaction().begin();
-		em.persist(testCat);
-		em.getTransaction().commit();
-		
-		//Below is the actual test
 		List<Skill> emptySkillList = new ArrayList<Skill>();
 		when(mockSkillService.getAllSkills()).thenReturn(emptySkillList);
 		mockMvc.perform(get("/allSkills")).andExpect(MockMvcResultMatchers.status().is(404));
@@ -145,7 +121,6 @@ class SkillControllerUnitTest {
 
 //
 	@Test
-	@Order(1)
 	void test_getSkillByID_happy() throws Exception {
 		Skill expected = new Skill(1, "Skill1", new Category(1, "Cat1", null));
 		//Skill actual = skillController.getSkillByID();
@@ -153,26 +128,22 @@ class SkillControllerUnitTest {
 	}
 	
 	@Test
-	@Order(1)
 	void test_getSkillbyID_BadID() throws Exception {
 		mockMvc.perform(get("/skill/2")).andExpect(MockMvcResultMatchers.status().is(404));
 	}
 	
 	@Test
-	@Order(1)
 	void test_getSkillbyID_BadParameter() throws Exception {
 		mockMvc.perform(get("/skill/test")).andExpect(MockMvcResultMatchers.status().is(400));
 	}
 	
 	@Test
-	@Order(1)
 	void test_getSkillbyID_EmptyParameter() throws Exception {
 		mockMvc.perform(get("/skill/ ")).andExpect(MockMvcResultMatchers.status().is(400));
 	}
 	
 //	
 	@Test
-	@Order(1)
 	void test_addSkill_happy() throws Exception {
 		SkillDTO skillDTO = new SkillDTO("TestSkill", new Category(1, "TestCat", "Description"));
 		String body = om.writeValueAsString(skillDTO);
@@ -184,7 +155,6 @@ class SkillControllerUnitTest {
 	}
 	
 	@Test
-	@Order(1)
 	void test_addSkill_emptyName() throws Exception {
 		SkillDTO skillDTO = new SkillDTO(" ", new Category(1, "TestCat", "Description"));
 		String body = om.writeValueAsString(skillDTO);
@@ -196,7 +166,6 @@ class SkillControllerUnitTest {
 	}
 	
 	@Test
-	@Order(1)
 	void test_addSkill_badCategory() throws Exception {
 		SkillDTO problemSkill = new SkillDTO("ProblemCat", new Category(1, "   ", "Description"));
 		String body = om.writeValueAsString(problemSkill);
@@ -208,7 +177,6 @@ class SkillControllerUnitTest {
 	}
 	
 	@Test
-	@Order(1)
 	void test_addSkill_duplicateSkill() throws Exception {
 		SkillDTO problemSkill = new SkillDTO("ProblemSkill", new Category(1, "TestCat", "Description"));
 		String body = om.writeValueAsString(problemSkill);
@@ -221,7 +189,6 @@ class SkillControllerUnitTest {
 	
 //	
 	@Test
-	@Order(1)
 	void test_updateSkill_happy() throws Exception {
 		SkillDTO skillDTO = new SkillDTO("TestSkill", new Category(1, "TestCat", "Description"));
 		String body = om.writeValueAsString(skillDTO);
@@ -233,7 +200,6 @@ class SkillControllerUnitTest {
 	}
 	
 	@Test
-	@Order(1)
 	void test_updateSkill_emptyName() throws Exception {
 		SkillDTO skillDTO = new SkillDTO(" ", new Category(1, "TestCat", "Description"));
 		String body = om.writeValueAsString(skillDTO);
@@ -245,7 +211,6 @@ class SkillControllerUnitTest {
 	}
 	
 	@Test
-	@Order(1)
 	void test_updateSkill_emptyPathParam() throws Exception {
 		SkillDTO skillDTO = new SkillDTO("TestSkill", new Category(1, "TestCat", "Description"));
 		String body = om.writeValueAsString(skillDTO);
@@ -257,7 +222,6 @@ class SkillControllerUnitTest {
 	}
 	
 	@Test
-	@Order(1)
 	void test_updateSkill_badID() throws Exception {
 		SkillDTO skillDTO = new SkillDTO("ProblemSkill", new Category(1, "TestCat", "Description"));
 		String body = om.writeValueAsString(skillDTO);
@@ -269,7 +233,6 @@ class SkillControllerUnitTest {
 	}
 	
 	@Test
-	@Order(1)
 	void test_updateSkill_badParameter() throws Exception {
 		SkillDTO skillDTO = new SkillDTO("TestSkill", new Category(1, "TestCat", "Description"));
 		String body = om.writeValueAsString(skillDTO);
@@ -281,7 +244,6 @@ class SkillControllerUnitTest {
 	}
 	
 	@Test
-	@Order(1)
 	void test_updateSkill_badCategory() throws Exception {
 		SkillDTO skillDTO = new SkillDTO("ProblemCat", new Category(1, "   ", "Description"));
 		String body = om.writeValueAsString(skillDTO);
@@ -294,31 +256,26 @@ class SkillControllerUnitTest {
 
 //	
 	@Test
-	@Order(1)
 	void test_deleteSkill_happy() throws Exception {
 		mockMvc.perform(delete("/skill/1")).andExpect(MockMvcResultMatchers.status().is(200));
 	}
 	
 	@Test
-	@Order(1)
 	void test_deleteSkill_badID() throws Exception {
 		mockMvc.perform(delete("/skill/2")).andExpect(MockMvcResultMatchers.status().is(400));
 	}
 	
 	@Test
-	@Order(1)
 	void test_deleteSkill_skillDoesNotExist() throws Exception {
 		mockMvc.perform(delete("/skill/3")).andExpect(MockMvcResultMatchers.status().is(404));
 	}
 	
 	@Test
-	@Order(1)
 	void test_deleteSkill_emptyParameter() throws Exception {
 		mockMvc.perform(delete("/skill/ ")).andExpect(MockMvcResultMatchers.status().is(400));
 	}
 	
 	@Test
-	@Order(1)
 	void test_deleteSkill_badParameter() throws Exception {
 		mockMvc.perform(delete("/skill/test")).andExpect(MockMvcResultMatchers.status().is(400));
 	}
