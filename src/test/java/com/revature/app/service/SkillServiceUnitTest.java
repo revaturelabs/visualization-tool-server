@@ -46,25 +46,29 @@ class SkillServiceUnitTest {
 	@BeforeEach
 	public void beforeTest() {
 		Skill skill1 = new Skill(1, "", new Category(1, "", null));
-		Skill skill2 = new Skill(2, "", new Category(1, "", null));
+		Skill skill2 = new Skill(0, "", new Category(1, "", null));
 		Skill skill3 = new Skill(1, "TestSkill", new Category(1, "TestCat", null));
 		SkillDTO skillDTO1 = new SkillDTO("TestSkill", new Category(1, "TestCat", null));
 		SkillDTO skillDTO2 = new SkillDTO("Duplicate", new Category(1, "TestCat", null));
 		SkillDTO skillDTO3 = new SkillDTO("Test", new Category(0, "BadCat", null));
 		SkillDTO skillDTO4 = new SkillDTO("TestSkill", new Category(1, "TestCat", null));
 		
+		//Get
 		lenient().when(mockSkillDAO.findById(eq(1))).thenReturn(skill1);
 		lenient().when(mockSkillDAO.findById(eq(0))).thenReturn(null);
 		
+		//Add
 		lenient().when(mockSkillDAO.save(new Skill(skillDTO1))).thenReturn(skill3);
 		lenient().when(mockSkillDAO.save(new Skill(skillDTO2))).thenReturn(null);
 		lenient().when(mockSkillDAO.save(new Skill(skillDTO3))).thenReturn(null);
 		
+		//Update
 		lenient().when(mockSkillDAO.save(new Skill(skillDTO4))).thenReturn(skill3);
 		lenient().when(mockSkillDAO.findById(eq(2))).thenReturn(skill3);
-		lenient().when(mockSkillDAO.findById(eq(3))).thenReturn(skill3);
+		lenient().when(mockSkillDAO.findById(eq(3))).thenReturn(skill2);
 		lenient().when(mockSkillDAO.save(skill3)).thenReturn(skill3);
 		
+		//Delete
 		lenient().when(mockSkillDAO.findById(4)).thenReturn(skill3).thenReturn(null);
 		lenient().when(mockSkillDAO.findById(5)).thenReturn(skill3);
 	}
