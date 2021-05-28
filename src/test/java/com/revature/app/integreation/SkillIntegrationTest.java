@@ -44,7 +44,6 @@ import com.revature.app.service.SkillService;
 @WebAppConfiguration
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @DirtiesContext(classMode = ClassMode.BEFORE_CLASS)
-@AutoConfigureMockMvc
 @ActiveProfiles("test")
 @SpringBootTest
 class SkillIntegrationTest {
@@ -62,7 +61,6 @@ class SkillIntegrationTest {
 	EntityManagerFactory emf;
 	private EntityManager em;
 
-	@Autowired
 	private MockMvc mockMvc;
 	private ObjectMapper objectMapper;
 	
